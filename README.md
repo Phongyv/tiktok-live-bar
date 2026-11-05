@@ -98,7 +98,7 @@ Truy cập [http://127.0.0.1:3000/control.html](http://127.0.0.1:3000/control.ht
 ### Kết nối TikTok LIVE
 
 1. Bật LIVE trên tài khoản TikTok.
-2. Trong Control Panel, nhập username của tài khoản đang live → **Kết nối**. Bridge nhận sự kiện trực tiếp từ TikTok, không cần TikFinity Desktop.
+2. Trong Control Panel, nhập username của tài khoản đang live → **Kết nối**. Bridge nhận sự kiện trực tiếp từ TikTok LIVE.
 
 ---
 
