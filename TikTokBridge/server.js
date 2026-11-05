@@ -77,7 +77,9 @@ let observedGiftSaveTimer = null;
 const musicState = {
     currentTrackId: null,
     playing: false,
-    volume: Math.max(0, Math.min(1, Number(gameConfig.music?.volume) || 0.35)),
+    volume: Number.isFinite(Number(gameConfig.music?.volume))
+        ? Math.max(0, Math.min(1, Number(gameConfig.music.volume)))
+        : 0.35,
     shuffle: false,
     repeat: 'all',
     sourceReady: false,
