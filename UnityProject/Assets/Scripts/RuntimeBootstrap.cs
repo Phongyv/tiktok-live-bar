@@ -22,7 +22,7 @@ namespace TikTokLiveGame
             PlayerManager players = new GameObject("Players").AddComponent<PlayerManager>();
             players.transform.SetParent(root.transform);
             GiftEffectManager giftEffects = root.AddComponent<GiftEffectManager>();
-            root.AddComponent<MusicPlaylistPlayer>();
+            // Music is now played inside the TikTok LIVE Studio Link Source.
             TikTokGameController game = root.AddComponent<TikTokGameController>();
             game.Initialize(client, players, giftEffects);
             VisualCaptureHarness.InstallIfRequested(root);

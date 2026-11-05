@@ -24,7 +24,7 @@
 - 🎵 **DJ Booth** — Phát nhạc + video nền tùy chỉnh
 - ⚙️ **Master Rules** — Tùy chỉnh luật game qua giao diện web, không cần code
 - 🧪 **Test Lab** — Demo mode với người xem giả để test trước khi live
-- 🎨 **Chroma Key** — Bấm F2 để bật nền xanh, ghép vào OBS dễ dàng
+- 🎨 **Chroma Key** — Bấm F2 để bật nền xanh, ghép vào TikTok LIVE Studio
 
 ---
 
@@ -34,8 +34,8 @@
 |-----------|-----------|
 | **Node.js** | ≥ 20.x |
 | **Unity** | Chỉ cần khi tự build source; dùng đúng 6000.2.10f1 |
-| **TikFinity Desktop** | Phiên bản mới nhất |
-| **OBS Studio** | Khuyến nghị cho streaming |
+| **Kết nối TikTok LIVE** | Bridge kết nối trực tiếp, không cần ứng dụng trung gian |
+| **TikTok LIVE Studio** | Dùng để phát trực tiếp và nhận Link Source |
 | **Windows** | 10 / 11 (64-bit) |
 
 ---
@@ -97,8 +97,8 @@ Truy cập [http://127.0.0.1:3000/control.html](http://127.0.0.1:3000/control.ht
 
 ### Kết nối TikTok LIVE
 
-1. Mở TikFinity Desktop → đăng nhập → bật LIVE
-2. Trong Control Panel, nhập username TikTok đang live → **Kết nối**
+1. Bật LIVE trên tài khoản TikTok.
+2. Trong Control Panel, nhập username của tài khoản đang live → **Kết nối**. Bridge nhận sự kiện trực tiếp từ TikTok LIVE.
 
 ---
 
@@ -162,11 +162,16 @@ Truy cập [http://127.0.0.1:3000/control.html](http://127.0.0.1:3000/control.ht
 
 ---
 
-## 🎵 Thêm nhạc & video
+## 🎵 DJ Music Player & video nền
 
-- **Nhạc nền DJ:** Thả file `.mp3`, `.wav`, `.ogg` vào thư mục `DJ_MUSIC/`
-- **Video nền:** Thả file `.mp4`, `.mov`, `.webm` hoặc ảnh `.png`, `.jpg` vào `DJ_VIDEO/`
-- Game tự phát lặp và tắt tiếng video
+- **Nhạc DJ:** Thả file `.mp3`, `.wav`, `.ogg` hoặc `.m4a` vào thư mục `DJ_MUSIC/`.
+- **Video nền:** Thả file `.mp4`, `.mov`, `.webm` hoặc ảnh `.png`, `.jpg` vào `DJ_VIDEO/`.
+- Mở Control Panel → tab **🎵 DJ Music** → bấm **Quét thư viện**.
+- Sao chép URL Music Source, trong TikTok LIVE Studio chọn **Add source → Link**, rồi dán URL.
+- Bấm **Phát nhạc** trong Control Panel. Nếu nguồn Link yêu cầu thao tác, bấm **Bật âm thanh LIVE** ngay trong nguồn đó.
+- Chọn bài, tạm dừng, chuyển bài, bật ngẫu nhiên/lặp và chỉnh âm lượng trực tiếp trong Control Panel. Nhạc được phát từ Link Source, không còn do Unity Game phát.
+
+> **Lưu ý với EXE cũ:** thay đổi bỏ player nhạc trong Unity chỉ có hiệu lực sau khi build lại game bằng `build.bat`. Nếu vẫn dùng EXE phát hành cũ, mở Windows **Settings → System → Sound → Volume mixer** và đặt âm lượng riêng của `OngChuMMO_Live.exe` về `0` để tắt nhạc tại máy; giữ âm lượng Link Source trong LIVE Studio ở mức nghe được.
 
 > ⚠️ Hãy sử dụng nhạc và video có bản quyền hợp lệ.
 
@@ -189,8 +194,6 @@ Sửa file `TikTokBridge/.env`:
 NODE_ENV=production
 HOST=127.0.0.1
 PORT=3000
-LIVE_PROVIDER=tikfinity
-TIKFINITY_WS_URL=ws://127.0.0.1:21213/
 ALLOW_LAN=0
 ```
 
@@ -205,7 +208,7 @@ tiên nếu cùng tên. Bản game dựng sẵn kết nối cố định tới c
 - **Cổng 3000 đang bị chiếm:** đóng đúng ứng dụng/PID được launcher báo; launcher không tự tắt ứng dụng khác.
 - **Không tìm thấy game:** bạn đã tải Source ZIP hoặc clone Git. Hãy tải bản Windows trong Releases hoặc tự build bằng Unity.
 - **Windows SmartScreen cảnh báo:** chọn **More info → Run anyway** nếu file được tải từ Release chính thức của repo này.
-- **TikTok chưa có sự kiện:** mở TikFinity, kiểm tra WebSocket `ws://127.0.0.1:21213/`, sau đó thử **Test Lab** trước.
+- **TikTok chưa có sự kiện:** kiểm tra username và trạng thái phiên LIVE, kiểm tra kết nối Internet rồi thử ngắt/kết nối lại. Dùng **Test Lab** để xác nhận Bridge và Game vẫn hoạt động.
 
 ---
 
@@ -221,11 +224,12 @@ Hoặc dùng **Test Lab** trong Control Panel để tạo người xem giả.
 
 ---
 
-## 📺 Ghép vào OBS
+## 📺 Ghép vào TikTok LIVE Studio
 
-1. Thêm source **Game Capture** → chọn cửa sổ ÔNG CHÚ MMO Live
-2. Bấm **F2** trong game để bật Chroma Key (nền xanh)
-3. Trong OBS: thêm filter **Chroma Key** → chọn màu xanh
+1. Thêm nguồn **Game Capture** hoặc **Window Capture** để lấy cửa sổ Unity Game.
+2. Bấm **F2** trong game để bật Chroma Key (nền xanh) nếu cần.
+3. Thêm một nguồn **Link** bằng URL Music Source trong Control Panel → tab **DJ Music**.
+4. Kiểm tra nguồn Link không bị tắt tiếng trong Audio Mixer của LIVE Studio. Không thêm trùng nhiều Music Source trong cùng một scene.
 
 ---
 

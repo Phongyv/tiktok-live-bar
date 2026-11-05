@@ -11,10 +11,10 @@ const fs = require('fs/promises');
 const WebSocket = require('ws');
 const { TikTokLiveConnection } = require('tiktok-live-connector');
 const { getServerSettings, loadEnvironmentFile } = require('./src/config/environment');
+const { listMusicTracks, resolveMusicTrack } = require('./src/music/library');
 
 loadEnvironmentFile();
 
-const { normalizeTikFinityMessage } = require('./src/tiktok/normalize-tikfinity-event');
 const {
     normalizeChat,
     normalizeMember,
@@ -52,8 +52,6 @@ const assetsDir = path.join(__dirname, 'assets');
 const gifsDir = path.join(assetsDir, 'gifs');
 const masterConfigPath = path.join(__dirname, 'config', 'master.json');
 const observedGiftsPath = path.join(__dirname, 'config', 'observed-gifts.json');
-const LIVE_PROVIDER = String(process.env.LIVE_PROVIDER || gameConfig.liveProvider || 'tikfinity').toLowerCase();
-const TIKFINITY_WS_URL = String(process.env.TIKFINITY_WS_URL || gameConfig.tikfinityWsUrl || 'ws://127.0.0.1:21213/');
 
 let liveConnection = null;
 let connectionAttempt = 0;
@@ -76,6 +74,17 @@ const observedGifts = new Map((Array.isArray(initialObservedGifts) ? initialObse
     .map(gift => [String(gift.giftId || gift.giftName || ''), gift])
     .filter(([key]) => key));
 let observedGiftSaveTimer = null;
+const musicState = {
+    currentTrackId: null,
+    playing: false,
+    volume: Number.isFinite(Number(gameConfig.music?.volume))
+        ? Math.max(0, Math.min(1, Number(gameConfig.music.volume)))
+        : 0.35,
+    shuffle: false,
+    repeat: 'all',
+    sourceReady: false,
+    sourceError: ''
+};
 
 if (!ALLOW_LAN && !isLoopbackAddress(HOST) && HOST.toLowerCase() !== 'localhost') {
     throw new Error('Từ chối mở Node ra mạng LAN. Chỉ đặt ALLOW_LAN=1 khi đã có lớp xác thực bên ngoài.');
@@ -100,7 +109,8 @@ app.use((req, res, next) => {
         return res.status(403).type('text/plain').send('Forbidden');
     }
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'DENY');
+    const isMusicSourceDocument = req.path === '/music-source.html';
+    if (!isMusicSourceDocument) res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('Referrer-Policy', 'no-referrer');
     res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
     res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
@@ -108,7 +118,7 @@ app.use((req, res, next) => {
         "default-src 'self'",
         "base-uri 'none'",
         "object-src 'none'",
-        "frame-ancestors 'none'",
+        ...(isMusicSourceDocument ? [] : ["frame-ancestors 'none'"]),
         "form-action 'self'",
         "script-src 'self' 'unsafe-inline'",
         "style-src 'self' 'unsafe-inline'",
@@ -134,6 +144,28 @@ app.get('/api/health', (_req, res) => {
 
 app.get('/api/config', (_req, res) => {
     res.json({ game: gameConfig, gifts: giftConfig, master: masterConfig, observedGifts: [...observedGifts.values()] });
+});
+
+app.get('/api/music/tracks', async (_req, res) => {
+    try {
+        const { tracks } = await listMusicTracks(__dirname);
+        res.json({ tracks: tracks.map(({ id, name, url }) => ({ id, name, url })) });
+    } catch (error) {
+        console.error('Không thể đọc thư viện nhạc:', error);
+        res.status(500).json({ error: 'Không thể đọc thư viện nhạc' });
+    }
+});
+
+app.get('/music-files/:trackId', async (req, res) => {
+    try {
+        const track = await resolveMusicTrack(__dirname, req.params.trackId);
+        if (!track) return res.status(404).type('text/plain').send('Music track not found');
+        res.setHeader('Cache-Control', 'no-store');
+        return res.sendFile(track.filePath);
+    } catch (error) {
+        console.error('Không thể mở file nhạc:', error);
+        return res.status(500).type('text/plain').send('Cannot read music track');
+    }
 });
 
 app.get('/api/gifs', async (_req, res) => {
@@ -165,6 +197,87 @@ function send(ws, data) {
     if (ws.readyState !== WebSocket.OPEN) return;
     if (ws.bufferedAmount > 512 * 1024) return ws.terminate();
     ws.send(JSON.stringify(data));
+}
+
+async function sendMusicLibrary(ws) {
+    const { tracks } = await listMusicTracks(__dirname);
+    if (musicState.currentTrackId && !tracks.some(track => track.id === musicState.currentTrackId)) {
+        musicState.currentTrackId = null;
+        musicState.playing = false;
+    }
+    send(ws, {
+        type: 'music_library',
+        tracks: tracks.map(({ id, name, url }) => ({ id, name, url })),
+        state: { ...musicState }
+    });
+}
+
+function broadcastMusicState() {
+    broadcast({ type: 'music_state', state: { ...musicState } });
+}
+
+async function handleMusicControl(ws, message) {
+    const { tracks } = await listMusicTracks(__dirname);
+    const action = String(message.action || '');
+    const currentIndex = tracks.findIndex(track => track.id === musicState.currentTrackId);
+
+    if (action === 'refresh') {
+        await sendMusicLibrary(ws);
+        broadcast({
+            type: 'music_library',
+            tracks: tracks.map(({ id, name, url }) => ({ id, name, url })),
+            state: { ...musicState }
+        });
+        return;
+    }
+
+    if (action === 'play') {
+        if (!tracks.length) return send(ws, { type: 'error', message: 'Thư mục DJ_MUSIC chưa có file nhạc.' });
+        if (!tracks.some(track => track.id === musicState.currentTrackId)) musicState.currentTrackId = tracks[0].id;
+        musicState.playing = true;
+    } else if (action === 'pause') {
+        musicState.playing = false;
+    } else if (action === 'next' || action === 'previous') {
+        if (!tracks.length) return send(ws, { type: 'error', message: 'Thư mục DJ_MUSIC chưa có file nhạc.' });
+        let nextIndex = currentIndex;
+        if (nextIndex < 0) nextIndex = 0;
+        else if (action === 'next' && musicState.shuffle && tracks.length > 1) {
+            do {
+                nextIndex = Math.floor(Math.random() * tracks.length);
+            } while (nextIndex === currentIndex);
+        } else {
+            nextIndex = (nextIndex + (action === 'next' ? 1 : -1) + tracks.length) % tracks.length;
+        }
+        musicState.currentTrackId = tracks[nextIndex].id;
+        musicState.playing = true;
+    } else if (action === 'select') {
+        const selected = tracks.find(track => track.id === String(message.trackId || ''));
+        if (!selected) return send(ws, { type: 'error', message: 'Không tìm thấy bài nhạc đã chọn.' });
+        musicState.currentTrackId = selected.id;
+        musicState.playing = true;
+    } else if (action === 'set_volume') {
+        const volume = Number(message.volume);
+        if (!Number.isFinite(volume)) return send(ws, { type: 'error', message: 'Mức âm lượng không hợp lệ.' });
+        musicState.volume = Math.max(0, Math.min(1, volume));
+    } else if (action === 'set_shuffle') {
+        musicState.shuffle = message.enabled === true;
+    } else if (action === 'set_repeat') {
+        const repeat = String(message.repeat || '');
+        if (!['off', 'all', 'one'].includes(repeat)) {
+            return send(ws, { type: 'error', message: 'Chế độ lặp không hợp lệ.' });
+        }
+        musicState.repeat = repeat;
+    } else {
+        return send(ws, { type: 'error', message: 'Lệnh Music Player không được hỗ trợ.' });
+    }
+
+    broadcast({
+        type: 'music_command',
+        action: action === 'select' || action === 'next' || action === 'previous' ? 'play' : action,
+        trackId: musicState.currentTrackId,
+        state: { ...musicState }
+    });
+    broadcastMusicState();
 }
 
 function setStatus(state, username, message) {
@@ -571,67 +684,14 @@ function scheduleReconnect(username) {
     setStatus(
         'reconnecting',
         username,
-        LIVE_PROVIDER === 'tikfinity'
-            ? `Chưa thấy TikFinity Desktop. Tự thử lại sau ${Math.ceil(delayMs / 1000)} giây...`
-            : `Mất kết nối TikTok. Tự kết nối lại sau ${Math.ceil(delayMs / 1000)} giây...`
+        `Mất kết nối TikTok. Tự kết nối lại sau ${Math.ceil(delayMs / 1000)} giây...`
     );
     reconnectTimer = setTimeout(() => {
         reconnectTimer = null;
         if (desiredUsername === username) {
-            void connectToLiveProvider(username, { resetSession: false, isReconnect: true });
+            void connectToTikTok(username, { resetSession: false, isReconnect: true });
         }
     }, delayMs);
-}
-
-async function connectToTikFinity(username, options = {}) {
-    const resetSession = options.resetSession !== false;
-    const isReconnect = options.isReconnect === true;
-    stopDemo();
-    cancelReconnect();
-    desiredUsername = username;
-    const attempt = ++connectionAttempt;
-    await disconnectCurrentConnection();
-
-    if (resetSession) {
-        resetSessionState('tiktok');
-        broadcast({ type: 'reset' });
-        broadcastMetrics();
-    }
-    setStatus(
-        isReconnect ? 'reconnecting' : 'connecting',
-        username,
-        isReconnect ? 'Đang kết nối lại TikFinity Desktop...' : 'Đang kết nối TikFinity Desktop...'
-    );
-
-    const connection = new WebSocket(TIKFINITY_WS_URL);
-    liveConnection = connection;
-    const active = () => attempt === connectionAttempt && liveConnection === connection;
-
-    connection.on('open', () => {
-        if (!active()) return;
-        reconnectFailures = 0;
-        setStatus('connected', username, `Đã kết nối TikFinity cho @${username}`);
-        broadcastMetrics();
-        console.log(`Đã kết nối TikFinity tại ${TIKFINITY_WS_URL}`);
-    });
-    connection.on('message', payload => {
-        if (!active()) return;
-        for (const event of normalizeTikFinityMessage(payload)) processGameEvent(event);
-    });
-    connection.on('error', error => {
-        console.warn(`TikFinity WebSocket: ${error.message}`);
-    });
-    connection.on('close', () => {
-        if (!active()) return;
-        liveConnection = null;
-        scheduleReconnect(username);
-    });
-}
-
-function connectToLiveProvider(username, options = {}) {
-    return LIVE_PROVIDER === 'tikfinity'
-        ? connectToTikFinity(username, options)
-        : connectToTikTok(username, options);
 }
 
 function attachTikTokEvents(connection) {
@@ -726,7 +786,7 @@ async function handleClientMessage(ws, message) {
 
     if (message.type === 'register') {
         if (ws.registered) return send(ws, { type: 'error', message: 'Client đã đăng ký quyền.' });
-        if (message.role !== 'control' && message.role !== 'overlay') {
+        if (message.role !== 'control' && message.role !== 'overlay' && message.role !== 'music') {
             return send(ws, { type: 'error', message: 'Vai trò client không hợp lệ.' });
         }
         ws.role = message.role;
@@ -736,6 +796,7 @@ async function handleClientMessage(ws, message) {
         send(ws, { type: 'metrics', ...metrics });
         if (ws.role === 'control') send(ws, { type: 'master_config', master: masterConfig });
         if (ws.role === 'control') send(ws, giftCatalogMessage());
+        if (ws.role === 'control' || ws.role === 'music') await sendMusicLibrary(ws);
         if (ws.role === 'overlay') {
             send(ws, createSnapshot());
             send(ws, viewerGuideMessage());
@@ -745,7 +806,7 @@ async function handleClientMessage(ws, message) {
 
     if (!ws.registered) return send(ws, { type: 'error', message: 'Client chưa đăng ký quyền.' });
 
-    const controlOnly = message.type === 'master_save' || message.type === 'master_test';
+    const controlOnly = message.type === 'master_save' || message.type === 'master_test' || message.type === 'music_control';
     const operatorOnly = new Set([
         'set_username', 'disconnect_tiktok', 'demo_start', 'demo_stop', 'demo_event', 'reset_game'
     ]).has(message.type);
@@ -754,6 +815,34 @@ async function handleClientMessage(ws, message) {
     }
     if (operatorOnly && ws.role !== 'control' && !ws.nativeClient) {
         return send(ws, { type: 'error', message: 'Client không có quyền điều khiển.' });
+    }
+
+    if (message.type === 'music_control') {
+        return handleMusicControl(ws, message);
+    }
+
+    if (message.type === 'music_source_ready') {
+        if (ws.role !== 'music') return send(ws, { type: 'error', message: 'Music Source không hợp lệ.' });
+        musicState.sourceReady = true;
+        musicState.sourceError = '';
+        broadcastMusicState();
+        return;
+    }
+
+    if (message.type === 'music_source_error') {
+        if (ws.role !== 'music') return send(ws, { type: 'error', message: 'Music Source không hợp lệ.' });
+        musicState.sourceError = String(message.error || 'Không thể phát file nhạc').slice(0, 180);
+        broadcastMusicState();
+        return;
+    }
+
+    if (message.type === 'music_playback') {
+        if (ws.role !== 'music') return send(ws, { type: 'error', message: 'Music Source không hợp lệ.' });
+        musicState.playing = message.playing === true;
+        if (typeof message.trackId === 'string') musicState.currentTrackId = message.trackId || null;
+        musicState.sourceError = String(message.error || '').slice(0, 180);
+        broadcastMusicState();
+        return;
     }
 
     if (message.type === 'master_save') {
@@ -795,7 +884,7 @@ async function handleClientMessage(ws, message) {
                 message: 'Username chỉ được gồm chữ, số, dấu chấm hoặc gạch dưới.'
             });
         }
-        return connectToLiveProvider(username);
+        return connectToTikTok(username);
     }
 
     if (message.type === 'disconnect_tiktok') {
@@ -888,6 +977,13 @@ wss.on('connection', (ws, request) => {
             console.error('Không thể xử lý lệnh WebSocket:', error?.message || error);
             send(ws, { type: 'error', message: 'Không thể xử lý lệnh.' });
         });
+    });
+    ws.on('close', () => {
+        if (ws.role === 'music') {
+            musicState.sourceReady = false;
+            musicState.playing = false;
+            broadcastMusicState();
+        }
     });
     ws.on('error', error => console.warn('WebSocket client error:', error.message));
 });

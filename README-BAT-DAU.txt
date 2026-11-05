@@ -2,14 +2,14 @@ ONG CHU MMO LIVE - FULL SOURCE, GIAY PHEP MIT
 
 Noi dung goi:
 - UnityProject: toan bo source Unity, scene, script va asset cua game.
-- TikTokBridge: Node.js bridge, TikTok/TikFinity, Control va Master Rules.
-- DJ_MUSIC: tha file MP3, WAV hoac OGG cua ban vao day.
+- TikTokBridge: Node.js bridge ket noi truc tiep TikTok LIVE, Control va Master Rules.
+- DJ_MUSIC: tha file MP3, WAV, OGG hoac M4A cua ban vao day.
 - DJ_VIDEO: tha video MP4 hoac anh PNG/JPG cua ban vao day.
 - LiveAssets: cac anh huong dan co the dat trong TikTok LIVE Studio.
 
 Yeu cau:
 - Node.js 20 tro len.
-- TikFinity neu su dung LIVE_PROVIDER=tikfinity.
+- Bridge tu ket noi TikTok LIVE va nhan su kien truc tiep.
 - Unity 6000.2.10f1 chi can khi tu build source.
 
 Chay nhanh tren Windows:
@@ -18,6 +18,14 @@ Chay nhanh tren Windows:
 3. Cai Node.js 20 tro len, sau do nhan dup run.bat.
 4. Neu cong 3000 dang bi chiem, dong dung chuong trinh duoc bao roi chay lai.
    Launcher khong tu tat chuong trinh khac de tranh mat du lieu.
+
+Phat nhac tren TikTok LIVE Studio:
+1. Tha MP3/WAV/OGG/M4A vao DJ_MUSIC.
+2. Trong Control Panel mo tab DJ Music, bam Quet thu vien va copy Music Source URL.
+3. Trong TikTok LIVE Studio chon Add source > Link, dan URL vua copy.
+4. Bam Phat nhac trong Control Panel. Neu Link Source yeu cau, bam Bat am thanh LIVE mot lan ngay trong nguon Link.
+5. Chon bai, chuyen bai va chinh am luong trong Control Panel. EXE Unity moi build tu source se khong phat nhac nua.
+6. Neu dang dung EXE cu, mo Windows Settings > System > Sound > Volume mixer va dat am luong OngChuMMO_Live.exe ve 0.
 
 Dau hieu thanh cong:
 - Cua so TikTok Bridge hien http://127.0.0.1:3000.
