@@ -86,7 +86,7 @@ async function startPlayback(fromGesture = false) {
             'Nhấn nút bên dưới ngay trong nguồn Link của TikTok LIVE Studio. Sau đó có thể điều khiển nhạc từ Control Panel.',
             true
         );
-        if (fromGesture) reportPlayback(false, error?.message || 'Trình duyệt nhúng chưa cho phép phát âm thanh.');
+        reportPlayback(false, error?.message || 'Trình duyệt nhúng chưa cho phép phát âm thanh.');
     }
 }
 
