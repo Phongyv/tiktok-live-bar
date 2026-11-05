@@ -18,6 +18,7 @@
     </div>
     <div class="tab-nav">
         <button class="tab-btn active" data-tab="live">🔴 Live</button>
+        <button class="tab-btn" data-tab="music">🎵 DJ Music</button>
         <button class="tab-btn" data-tab="rules">⚙️ Master Rules</button>
         <button class="tab-btn" data-tab="testlab">🧪 Test Lab</button>
         <button class="tab-btn" data-tab="events">🎯 Events</button>
@@ -91,6 +92,78 @@
                     <kbd>F11</kbd>
                 </div>
             </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── DJ MUSIC ── -->
+<section class="tab-panel" id="tab-music">
+    <div class="page-header">
+        <p class="page-eyebrow">Âm thanh livestream</p>
+        <h1 class="page-title">🎵 DJ Music Player</h1>
+        <p class="page-desc">Phát nhạc ngay trong TikTok LIVE Studio bằng Link Source. Unity Game không còn tự phát nhạc ra loa.</p>
+    </div>
+
+    <div class="grid-2">
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <p class="card-label">Now Playing</p>
+                    <h2 class="card-title" id="music-current-title">Chưa chọn bài</h2>
+                </div>
+                <span class="status-pill" id="music-source-status">Chưa kết nối</span>
+            </div>
+            <p class="help" id="music-source-detail">Thêm Music Source vào TikTok LIVE Studio để bắt đầu.</p>
+            <div class="music-controls">
+                <button id="music-previous" class="btn btn-secondary" title="Bài trước">⏮</button>
+                <button id="music-toggle" class="btn btn-primary">▶ Phát nhạc</button>
+                <button id="music-next" class="btn btn-secondary" title="Bài tiếp">⏭</button>
+            </div>
+            <div class="music-options">
+                <label class="music-option">
+                    <span>Ngẫu nhiên</span>
+                    <input id="music-shuffle" type="checkbox">
+                </label>
+                <label class="music-option" for="music-repeat">
+                    <span>Chế độ lặp</span>
+                    <select id="music-repeat">
+                        <option value="all">Lặp playlist</option>
+                        <option value="one">Lặp một bài</option>
+                        <option value="off">Không lặp</option>
+                    </select>
+                </label>
+            </div>
+            <label class="field-label" for="music-volume">Âm lượng gửi vào LIVE <span id="music-volume-label">35%</span></label>
+            <input id="music-volume" class="music-volume" type="range" min="0" max="100" value="35">
+        </div>
+
+        <div class="card">
+            <p class="card-label">TikTok LIVE Studio · Link Source</p>
+            <h2 class="card-title">Kết nối nguồn âm thanh</h2>
+            <p class="help">Sao chép đường dẫn bên dưới, sau đó vào TikTok LIVE Studio → Add source → Link và dán vào.</p>
+            <div class="music-url-row">
+                <input id="music-source-url" type="text" readonly>
+                <button id="music-copy-url" class="btn btn-secondary">Copy</button>
+            </div>
+            <div class="info-list">
+                <p class="info-item">Chỉ thêm một Music Source cho mỗi scene đang phát.</p>
+                <p class="info-item">Nếu LIVE Studio yêu cầu thao tác người dùng, bấm <strong>Bật âm thanh LIVE</strong> ngay trong nguồn Link một lần.</p>
+                <p class="info-item">Không mở đường dẫn này bằng tab Chrome thông thường khi đang LIVE; hãy dùng nguồn Link nhúng trong LIVE Studio.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card music-library-card">
+        <div class="card-header">
+            <div>
+                <p class="card-label">DJ_MUSIC</p>
+                <h2 class="card-title">Thư viện nhạc</h2>
+            </div>
+            <button id="music-refresh" class="btn btn-secondary btn-sm">↻ Quét thư viện</button>
+        </div>
+        <p class="help" style="margin-bottom:12px;">Thêm file MP3, WAV, OGG hoặc M4A vào thư mục DJ_MUSIC rồi quét lại thư viện.</p>
+        <div id="music-track-list" class="music-track-list">
+            <p class="help">Đang tải thư viện nhạc…</p>
         </div>
     </div>
 </section>
