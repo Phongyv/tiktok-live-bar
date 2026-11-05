@@ -171,6 +171,8 @@ Truy cập [http://127.0.0.1:3000/control.html](http://127.0.0.1:3000/control.ht
 - Bấm **Phát nhạc** trong Control Panel. Nếu nguồn Link yêu cầu thao tác, bấm **Bật âm thanh LIVE** ngay trong nguồn đó.
 - Chọn bài, tạm dừng, chuyển bài, bật ngẫu nhiên/lặp và chỉnh âm lượng trực tiếp trong Control Panel. Nhạc được phát từ Link Source, không còn do Unity Game phát.
 
+> **Lưu ý với EXE cũ:** thay đổi bỏ player nhạc trong Unity chỉ có hiệu lực sau khi build lại game bằng `build.bat`. Nếu vẫn dùng EXE phát hành cũ, mở Windows **Settings → System → Sound → Volume mixer** và đặt âm lượng riêng của `OngChuMMO_Live.exe` về `0` để tắt nhạc tại máy; giữ âm lượng Link Source trong LIVE Studio ở mức nghe được.
+
 > ⚠️ Hãy sử dụng nhạc và video có bản quyền hợp lệ.
 
 ---
