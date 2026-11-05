@@ -18,6 +18,7 @@ test('creates reversible and path-safe track IDs', () => {
     const id = createTrackId(fileName);
     assert.equal(decodeTrackId(id), fileName);
     assert.equal(decodeTrackId('../secret.mp3'), null);
+    assert.equal(decodeTrackId('..\\secret.mp3'), null);
     assert.equal(decodeTrackId('not a valid id'), null);
 });
 
