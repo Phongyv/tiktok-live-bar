@@ -34,7 +34,7 @@
 |-----------|-----------|
 | **Node.js** | ≥ 20.x |
 | **Unity** | Chỉ cần khi tự build source; dùng đúng 6000.2.10f1 |
-| **TikFinity Desktop** | Phiên bản mới nhất |
+| **Kết nối TikTok LIVE** | Bridge kết nối trực tiếp, không cần ứng dụng trung gian |
 | **OBS Studio** | Khuyến nghị cho streaming |
 | **Windows** | 10 / 11 (64-bit) |
 
@@ -97,8 +97,8 @@ Truy cập [http://127.0.0.1:3000/control.html](http://127.0.0.1:3000/control.ht
 
 ### Kết nối TikTok LIVE
 
-1. Mở TikFinity Desktop → đăng nhập → bật LIVE
-2. Trong Control Panel, nhập username TikTok đang live → **Kết nối**
+1. Bật LIVE trên tài khoản TikTok.
+2. Trong Control Panel, nhập username của tài khoản đang live → **Kết nối**. Bridge nhận sự kiện trực tiếp từ TikTok, không cần TikFinity Desktop.
 
 ---
 
@@ -189,8 +189,6 @@ Sửa file `TikTokBridge/.env`:
 NODE_ENV=production
 HOST=127.0.0.1
 PORT=3000
-LIVE_PROVIDER=tikfinity
-TIKFINITY_WS_URL=ws://127.0.0.1:21213/
 ALLOW_LAN=0
 ```
 
@@ -205,7 +203,7 @@ tiên nếu cùng tên. Bản game dựng sẵn kết nối cố định tới c
 - **Cổng 3000 đang bị chiếm:** đóng đúng ứng dụng/PID được launcher báo; launcher không tự tắt ứng dụng khác.
 - **Không tìm thấy game:** bạn đã tải Source ZIP hoặc clone Git. Hãy tải bản Windows trong Releases hoặc tự build bằng Unity.
 - **Windows SmartScreen cảnh báo:** chọn **More info → Run anyway** nếu file được tải từ Release chính thức của repo này.
-- **TikTok chưa có sự kiện:** mở TikFinity, kiểm tra WebSocket `ws://127.0.0.1:21213/`, sau đó thử **Test Lab** trước.
+- **TikTok chưa có sự kiện:** kiểm tra username và trạng thái phiên LIVE, kiểm tra kết nối Internet rồi thử ngắt/kết nối lại. Dùng **Test Lab** để xác nhận Bridge và Game vẫn hoạt động.
 
 ---
 
