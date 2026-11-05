@@ -16,7 +16,6 @@ let state = {
     repeat: 'all',
     sourceReady: false
 };
-let pendingPlay = false;
 let reconnectTimer = null;
 
 function send(data) {
@@ -62,7 +61,7 @@ function reportPlayback(playing, error = '') {
     });
 }
 
-async function startPlayback(fromGesture = false) {
+async function startPlayback() {
     const track = currentTrack();
     if (!track) {
         showPanel('Chưa có nhạc', 'Thêm file MP3, WAV, OGG hoặc M4A vào thư mục DJ_MUSIC.');
@@ -71,17 +70,14 @@ async function startPlayback(fromGesture = false) {
 
     setCurrentTrack(track);
     audio.volume = Math.max(0, Math.min(1, Number(state.volume) || 0));
-    pendingPlay = true;
 
     try {
         await audio.play();
-        pendingPlay = false;
         state.playing = true;
         hidePanel();
         reportPlayback(true);
     } catch (error) {
-        pendingPlay = true;
-        showPanel(
+            showPanel(
             'Cần bật âm thanh một lần',
             'Nhấn nút bên dưới ngay trong nguồn Link của TikTok LIVE Studio. Sau đó có thể điều khiển nhạc từ Control Panel.',
             true
@@ -97,9 +93,8 @@ function applyState(nextState) {
 
     if (state.playing) {
         const trackChanged = state.currentTrackId !== previousTrackId;
-        if (trackChanged || audio.paused) void startPlayback(false);
+        if (trackChanged || audio.paused) void startPlayback();
     } else {
-        pendingPlay = false;
         audio.pause();
     }
 }
@@ -115,7 +110,7 @@ function handleLibrary(data) {
     }
 
     if (state.playing) {
-        void startPlayback(false);
+        void startPlayback();
     } else {
         hidePanel();
     }
@@ -126,7 +121,7 @@ function nextTrack() {
     const index = tracks.findIndex(track => track.id === state.currentTrackId);
 
     if (state.repeat === 'one' && index >= 0) {
-        void startPlayback(false);
+        void startPlayback();
         return;
     }
 
@@ -141,7 +136,7 @@ function nextTrack() {
             if (state.repeat === 'off') {
                 state.playing = false;
                 reportPlayback(false);
-                showPanel('Đã hết playlist', 'Bấm Phát trong Control Panel để nghe lại.');
+                hidePanel();
                 return;
             }
             nextIndex = 0;
@@ -150,7 +145,7 @@ function nextTrack() {
 
     state.currentTrackId = tracks[nextIndex].id;
     state.playing = true;
-    void startPlayback(false);
+    void startPlayback();
 }
 
 function connect() {
@@ -179,7 +174,7 @@ function connect() {
 }
 
 enableButton.addEventListener('click', () => {
-    void startPlayback(true);
+    void startPlayback();
 });
 
 audio.addEventListener('ended', nextTrack);
