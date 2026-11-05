@@ -8,8 +8,8 @@ const SUPPORTED_EXTENSIONS = new Set(['.mp3', '.wav', '.ogg', '.m4a']);
 function getMusicDirectories(bridgeDirectory) {
     const repositoryRoot = path.resolve(bridgeDirectory, '..');
     return [
-        path.join(repositoryRoot, 'Build', 'DJ_MUSIC'),
         path.join(repositoryRoot, 'DJ_MUSIC'),
+        path.join(repositoryRoot, 'Build', 'DJ_MUSIC'),
         path.join(repositoryRoot, 'assets', 'music'),
         path.join(bridgeDirectory, 'assets', 'music')
     ];
@@ -23,7 +23,8 @@ function decodeTrackId(trackId) {
     if (typeof trackId !== 'string' || !/^[A-Za-z0-9_-]{1,512}$/.test(trackId)) return null;
     try {
         const fileName = Buffer.from(trackId, 'base64url').toString('utf8');
-        if (!fileName || path.basename(fileName) !== fileName || fileName.includes('\0')) return null;
+        if (!fileName || fileName.includes('/') || fileName.includes('\\') ||
+            path.basename(fileName) !== fileName || fileName.includes('\0')) return null;
         return createTrackId(fileName) === trackId ? fileName : null;
     } catch {
         return null;
