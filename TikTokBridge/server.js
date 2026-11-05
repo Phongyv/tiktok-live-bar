@@ -11,6 +11,7 @@ const fs = require('fs/promises');
 const WebSocket = require('ws');
 const { TikTokLiveConnection } = require('tiktok-live-connector');
 const { getServerSettings, loadEnvironmentFile } = require('./src/config/environment');
+const { listMusicTracks, resolveMusicTrack } = require('./src/music/library');
 
 loadEnvironmentFile();
 
@@ -73,6 +74,15 @@ const observedGifts = new Map((Array.isArray(initialObservedGifts) ? initialObse
     .map(gift => [String(gift.giftId || gift.giftName || ''), gift])
     .filter(([key]) => key));
 let observedGiftSaveTimer = null;
+const musicState = {
+    currentTrackId: null,
+    playing: false,
+    volume: Math.max(0, Math.min(1, Number(gameConfig.music?.volume) || 0.35)),
+    shuffle: false,
+    repeat: 'all',
+    sourceReady: false,
+    sourceError: ''
+};
 
 if (!ALLOW_LAN && !isLoopbackAddress(HOST) && HOST.toLowerCase() !== 'localhost') {
     throw new Error('Từ chối mở Node ra mạng LAN. Chỉ đặt ALLOW_LAN=1 khi đã có lớp xác thực bên ngoài.');
@@ -133,6 +143,28 @@ app.get('/api/config', (_req, res) => {
     res.json({ game: gameConfig, gifts: giftConfig, master: masterConfig, observedGifts: [...observedGifts.values()] });
 });
 
+app.get('/api/music/tracks', async (_req, res) => {
+    try {
+        const { tracks } = await listMusicTracks(__dirname);
+        res.json({ tracks: tracks.map(({ id, name, url }) => ({ id, name, url })) });
+    } catch (error) {
+        console.error('Không thể đọc thư viện nhạc:', error);
+        res.status(500).json({ error: 'Không thể đọc thư viện nhạc' });
+    }
+});
+
+app.get('/music-files/:trackId', async (req, res) => {
+    try {
+        const track = await resolveMusicTrack(__dirname, req.params.trackId);
+        if (!track) return res.status(404).type('text/plain').send('Music track not found');
+        res.setHeader('Cache-Control', 'no-store');
+        return res.sendFile(track.filePath);
+    } catch (error) {
+        console.error('Không thể mở file nhạc:', error);
+        return res.status(500).type('text/plain').send('Cannot read music track');
+    }
+});
+
 app.get('/api/gifs', async (_req, res) => {
     try {
         const files = await fs.readdir(gifsDir);
@@ -162,6 +194,81 @@ function send(ws, data) {
     if (ws.readyState !== WebSocket.OPEN) return;
     if (ws.bufferedAmount > 512 * 1024) return ws.terminate();
     ws.send(JSON.stringify(data));
+}
+
+async function sendMusicLibrary(ws) {
+    const { tracks } = await listMusicTracks(__dirname);
+    if (musicState.currentTrackId && !tracks.some(track => track.id === musicState.currentTrackId)) {
+        musicState.currentTrackId = null;
+        musicState.playing = false;
+    }
+    send(ws, {
+        type: 'music_library',
+        tracks: tracks.map(({ id, name, url }) => ({ id, name, url })),
+        state: { ...musicState }
+    });
+}
+
+function broadcastMusicState() {
+    broadcast({ type: 'music_state', state: { ...musicState } });
+}
+
+async function handleMusicControl(ws, message) {
+    const { tracks } = await listMusicTracks(__dirname);
+    const action = String(message.action || '');
+    const currentIndex = tracks.findIndex(track => track.id === musicState.currentTrackId);
+
+    if (action === 'refresh') {
+        await sendMusicLibrary(ws);
+        broadcast({
+            type: 'music_library',
+            tracks: tracks.map(({ id, name, url }) => ({ id, name, url })),
+            state: { ...musicState }
+        });
+        return;
+    }
+
+    if (action === 'play') {
+        if (!tracks.length) return send(ws, { type: 'error', message: 'Thư mục DJ_MUSIC chưa có file nhạc.' });
+        if (!tracks.some(track => track.id === musicState.currentTrackId)) musicState.currentTrackId = tracks[0].id;
+        musicState.playing = true;
+    } else if (action === 'pause') {
+        musicState.playing = false;
+    } else if (action === 'next' || action === 'previous') {
+        if (!tracks.length) return send(ws, { type: 'error', message: 'Thư mục DJ_MUSIC chưa có file nhạc.' });
+        let nextIndex = currentIndex;
+        if (nextIndex < 0) nextIndex = 0;
+        else nextIndex = (nextIndex + (action === 'next' ? 1 : -1) + tracks.length) % tracks.length;
+        musicState.currentTrackId = tracks[nextIndex].id;
+        musicState.playing = true;
+    } else if (action === 'select') {
+        const selected = tracks.find(track => track.id === String(message.trackId || ''));
+        if (!selected) return send(ws, { type: 'error', message: 'Không tìm thấy bài nhạc đã chọn.' });
+        musicState.currentTrackId = selected.id;
+        musicState.playing = true;
+    } else if (action === 'set_volume') {
+        const volume = Number(message.volume);
+        if (!Number.isFinite(volume)) return send(ws, { type: 'error', message: 'Mức âm lượng không hợp lệ.' });
+        musicState.volume = Math.max(0, Math.min(1, volume));
+    } else if (action === 'set_shuffle') {
+        musicState.shuffle = message.enabled === true;
+    } else if (action === 'set_repeat') {
+        const repeat = String(message.repeat || '');
+        if (!['off', 'all', 'one'].includes(repeat)) {
+            return send(ws, { type: 'error', message: 'Chế độ lặp không hợp lệ.' });
+        }
+        musicState.repeat = repeat;
+    } else {
+        return send(ws, { type: 'error', message: 'Lệnh Music Player không được hỗ trợ.' });
+    }
+
+    broadcast({
+        type: 'music_command',
+        action: action === 'select' || action === 'next' || action === 'previous' ? 'play' : action,
+        trackId: musicState.currentTrackId,
+        state: { ...musicState }
+    });
+    broadcastMusicState();
 }
 
 function setStatus(state, username, message) {
@@ -670,7 +777,7 @@ async function handleClientMessage(ws, message) {
 
     if (message.type === 'register') {
         if (ws.registered) return send(ws, { type: 'error', message: 'Client đã đăng ký quyền.' });
-        if (message.role !== 'control' && message.role !== 'overlay') {
+        if (message.role !== 'control' && message.role !== 'overlay' && message.role !== 'music') {
             return send(ws, { type: 'error', message: 'Vai trò client không hợp lệ.' });
         }
         ws.role = message.role;
@@ -680,6 +787,7 @@ async function handleClientMessage(ws, message) {
         send(ws, { type: 'metrics', ...metrics });
         if (ws.role === 'control') send(ws, { type: 'master_config', master: masterConfig });
         if (ws.role === 'control') send(ws, giftCatalogMessage());
+        if (ws.role === 'control' || ws.role === 'music') await sendMusicLibrary(ws);
         if (ws.role === 'overlay') {
             send(ws, createSnapshot());
             send(ws, viewerGuideMessage());
@@ -689,7 +797,7 @@ async function handleClientMessage(ws, message) {
 
     if (!ws.registered) return send(ws, { type: 'error', message: 'Client chưa đăng ký quyền.' });
 
-    const controlOnly = message.type === 'master_save' || message.type === 'master_test';
+    const controlOnly = message.type === 'master_save' || message.type === 'master_test' || message.type === 'music_control';
     const operatorOnly = new Set([
         'set_username', 'disconnect_tiktok', 'demo_start', 'demo_stop', 'demo_event', 'reset_game'
     ]).has(message.type);
@@ -698,6 +806,34 @@ async function handleClientMessage(ws, message) {
     }
     if (operatorOnly && ws.role !== 'control' && !ws.nativeClient) {
         return send(ws, { type: 'error', message: 'Client không có quyền điều khiển.' });
+    }
+
+    if (message.type === 'music_control') {
+        return handleMusicControl(ws, message);
+    }
+
+    if (message.type === 'music_source_ready') {
+        if (ws.role !== 'music') return send(ws, { type: 'error', message: 'Music Source không hợp lệ.' });
+        musicState.sourceReady = true;
+        musicState.sourceError = '';
+        broadcastMusicState();
+        return;
+    }
+
+    if (message.type === 'music_source_error') {
+        if (ws.role !== 'music') return send(ws, { type: 'error', message: 'Music Source không hợp lệ.' });
+        musicState.sourceError = String(message.error || 'Không thể phát file nhạc').slice(0, 180);
+        broadcastMusicState();
+        return;
+    }
+
+    if (message.type === 'music_playback') {
+        if (ws.role !== 'music') return send(ws, { type: 'error', message: 'Music Source không hợp lệ.' });
+        musicState.playing = message.playing === true;
+        if (typeof message.trackId === 'string') musicState.currentTrackId = message.trackId || null;
+        musicState.sourceError = String(message.error || '').slice(0, 180);
+        broadcastMusicState();
+        return;
     }
 
     if (message.type === 'master_save') {
@@ -832,6 +968,12 @@ wss.on('connection', (ws, request) => {
             console.error('Không thể xử lý lệnh WebSocket:', error?.message || error);
             send(ws, { type: 'error', message: 'Không thể xử lý lệnh.' });
         });
+    });
+    ws.on('close', () => {
+        if (ws.role === 'music') {
+            musicState.sourceReady = false;
+            broadcastMusicState();
+        }
     });
     ws.on('error', error => console.warn('WebSocket client error:', error.message));
 });
