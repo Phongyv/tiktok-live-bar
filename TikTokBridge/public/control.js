@@ -42,6 +42,20 @@ const ui = {
     saveMaster:     document.getElementById('save-master'),
     masterMessage:  document.getElementById('master-message'),
     recentGifts:    document.getElementById('recent-gifts'),
+    musicCurrentTitle: document.getElementById('music-current-title'),
+    musicSourceStatus: document.getElementById('music-source-status'),
+    musicSourceDetail: document.getElementById('music-source-detail'),
+    musicSourceUrl: document.getElementById('music-source-url'),
+    musicCopyUrl: document.getElementById('music-copy-url'),
+    musicTrackList: document.getElementById('music-track-list'),
+    musicRefresh: document.getElementById('music-refresh'),
+    musicPrevious: document.getElementById('music-previous'),
+    musicToggle: document.getElementById('music-toggle'),
+    musicNext: document.getElementById('music-next'),
+    musicShuffle: document.getElementById('music-shuffle'),
+    musicRepeat: document.getElementById('music-repeat'),
+    musicVolume: document.getElementById('music-volume'),
+    musicVolumeLabel: document.getElementById('music-volume-label'),
     metrics: {
         events:   document.getElementById('metric-events'),
         members:  document.getElementById('metric-members'),
@@ -57,6 +71,16 @@ let socket;
 let reconnectTimer;
 let masterConfig = { joinMode: 'keyword_only', giftAlwaysJoins: true, rules: [] };
 const recentGifts = new Map();
+let musicTracks = [];
+let musicState = {
+    currentTrackId: null,
+    playing: false,
+    volume: 0.35,
+    shuffle: false,
+    repeat: 'all',
+    sourceReady: false,
+    sourceError: '',
+};
 
 /* ═══ WEBSOCKET ══════════════════════════════════════════ */
 function send(message) {
@@ -212,6 +236,73 @@ function renderGiftCatalog() {
     );
 }
 
+/* ═══ DJ MUSIC ════════════════════════════════════════════ */
+function sendMusicControl(action, extras = {}) {
+    send({ type: 'music_control', action, ...extras });
+}
+
+function renderMusicLibrary() {
+    if (!ui.musicTrackList) return;
+    if (!musicTracks.length) {
+        const empty = document.createElement('p');
+        empty.className = 'help';
+        empty.textContent = 'Chưa tìm thấy file nhạc. Hãy thêm MP3, WAV, OGG hoặc M4A vào DJ_MUSIC.';
+        ui.musicTrackList.replaceChildren(empty);
+        return;
+    }
+
+    ui.musicTrackList.replaceChildren(...musicTracks.map((track, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'music-track' + (track.id === musicState.currentTrackId ? ' active' : '');
+        button.dataset.trackId = track.id;
+        const number = document.createElement('span');
+        number.className = 'music-track-number';
+        number.textContent = String(index + 1).padStart(2, '0');
+        const title = document.createElement('span');
+        title.className = 'music-track-name';
+        title.textContent = track.name;
+        const action = document.createElement('span');
+        action.className = 'music-track-action';
+        action.textContent = track.id === musicState.currentTrackId && musicState.playing ? 'ĐANG PHÁT' : 'PHÁT';
+        button.append(number, title, action);
+        button.addEventListener('click', () => sendMusicControl('select', { trackId: track.id }));
+        return button;
+    }));
+}
+
+function renderMusicState() {
+    if (!ui.musicCurrentTitle) return;
+    const current = musicTracks.find(track => track.id === musicState.currentTrackId);
+    ui.musicCurrentTitle.textContent = current?.name || 'Chưa chọn bài';
+    ui.musicSourceStatus.textContent = musicState.sourceReady ? 'Link đã kết nối' : 'Chưa kết nối Link';
+    ui.musicSourceStatus.classList.toggle('music-connected', musicState.sourceReady);
+    ui.musicSourceDetail.textContent = musicState.sourceError
+        ? 'Lỗi phát nhạc: ' + musicState.sourceError
+        : musicState.sourceReady
+            ? (musicState.playing ? 'Nguồn nhạc đang phát vào TikTok LIVE Studio.' : 'Nguồn nhạc đã sẵn sàng, đang tạm dừng.')
+            : 'Hãy thêm đường dẫn Music Source vào TikTok LIVE Studio để nhận âm thanh.';
+    ui.musicToggle.textContent = musicState.playing ? 'Ⅱ Tạm dừng' : '▶ Phát nhạc';
+    ui.musicShuffle.checked = musicState.shuffle === true;
+    ui.musicRepeat.value = ['off', 'all', 'one'].includes(musicState.repeat) ? musicState.repeat : 'all';
+    const volume = Math.round(Math.max(0, Math.min(1, Number(musicState.volume) || 0)) * 100);
+    ui.musicVolume.value = String(volume);
+    ui.musicVolumeLabel.textContent = volume + '%';
+    renderMusicLibrary();
+}
+
+function receiveMusicLibrary(data) {
+    musicTracks = Array.isArray(data.tracks) ? data.tracks : [];
+    musicState = { ...musicState, ...(data.state || {}) };
+    renderMusicState();
+}
+
+function receiveMusicState(data) {
+    if (!data.state) return;
+    musicState = { ...musicState, ...data.state };
+    renderMusicState();
+}
+
 /* ═══ SOCKET ═════════════════════════════════════════════ */
 function connectSocket() {
     clearTimeout(reconnectTimer);
@@ -236,6 +327,8 @@ function connectSocket() {
                 recentGifts.set(String(g.giftId || g.giftName || 'gift'), g);
             renderGiftCatalog();
         }
+        if (data.type === 'music_library') receiveMusicLibrary(data);
+        if (data.type === 'music_state') receiveMusicState(data);
         if (data.type === 'error') setMasterMessage(data.message || 'Có lỗi.', true);
     });
 
@@ -256,6 +349,40 @@ ui.username.addEventListener('keydown', e => { if (e.key === 'Enter') ui.connect
 ui.disconnect.addEventListener('click', () => send({ type: 'disconnect_tiktok' }));
 ui.stopDemo.addEventListener('click',   () => send({ type: 'demo_stop' }));
 ui.reset.addEventListener('click',     () => send({ type: 'reset_game' }));
+ui.musicRefresh.addEventListener('click', () => sendMusicControl('refresh'));
+ui.musicPrevious.addEventListener('click', () => sendMusicControl('previous'));
+ui.musicNext.addEventListener('click', () => sendMusicControl('next'));
+ui.musicToggle.addEventListener('click', () =>
+    sendMusicControl(musicState.playing ? 'pause' : 'play')
+);
+ui.musicShuffle.addEventListener('change', () =>
+    sendMusicControl('set_shuffle', { enabled: ui.musicShuffle.checked })
+);
+ui.musicRepeat.addEventListener('change', () =>
+    sendMusicControl('set_repeat', { repeat: ui.musicRepeat.value })
+);
+ui.musicVolume.addEventListener('input', () => {
+    ui.musicVolumeLabel.textContent = ui.musicVolume.value + '%';
+});
+ui.musicVolume.addEventListener('change', () =>
+    sendMusicControl('set_volume', { volume: Number(ui.musicVolume.value) / 100 })
+);
+ui.musicTrackList.addEventListener('click', event => {
+    const track = event.target.closest('[data-track-id]');
+    if (track) sendMusicControl('select', { trackId: track.dataset.trackId });
+});
+ui.musicSourceUrl.value = new URL('/music-source.html', location.origin).href;
+ui.musicCopyUrl.addEventListener('click', async () => {
+    try {
+        await navigator.clipboard.writeText(ui.musicSourceUrl.value);
+        ui.musicCopyUrl.textContent = 'Đã copy';
+    } catch {
+        ui.musicSourceUrl.focus();
+        ui.musicSourceUrl.select();
+        ui.musicCopyUrl.textContent = 'Đã chọn link';
+    }
+    setTimeout(() => { ui.musicCopyUrl.textContent = 'Copy'; }, 1800);
+});
 ui.addMasterRule.addEventListener('click', () => ui.masterRules.append(createRuleRow(emptyRule())));
 ui.saveMaster.addEventListener('click', () => {
     send({ type: 'master_save', master: readMasterFromUi() });
