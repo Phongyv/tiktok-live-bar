@@ -238,7 +238,13 @@ async function handleMusicControl(ws, message) {
         if (!tracks.length) return send(ws, { type: 'error', message: 'Thư mục DJ_MUSIC chưa có file nhạc.' });
         let nextIndex = currentIndex;
         if (nextIndex < 0) nextIndex = 0;
-        else nextIndex = (nextIndex + (action === 'next' ? 1 : -1) + tracks.length) % tracks.length;
+        else if (action === 'next' && musicState.shuffle && tracks.length > 1) {
+            do {
+                nextIndex = Math.floor(Math.random() * tracks.length);
+            } while (nextIndex === currentIndex);
+        } else {
+            nextIndex = (nextIndex + (action === 'next' ? 1 : -1) + tracks.length) % tracks.length;
+        }
         musicState.currentTrackId = tracks[nextIndex].id;
         musicState.playing = true;
     } else if (action === 'select') {
