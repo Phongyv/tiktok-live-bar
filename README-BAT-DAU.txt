@@ -3,7 +3,7 @@ ONG CHU MMO LIVE - FULL SOURCE, GIAY PHEP MIT
 Noi dung goi:
 - UnityProject: toan bo source Unity, scene, script va asset cua game.
 - TikTokBridge: Node.js bridge ket noi truc tiep TikTok LIVE, Control va Master Rules.
-- DJ_MUSIC: tha file MP3, WAV hoac OGG cua ban vao day.
+- DJ_MUSIC: tha file MP3, WAV, OGG hoac M4A cua ban vao day.
 - DJ_VIDEO: tha video MP4 hoac anh PNG/JPG cua ban vao day.
 - LiveAssets: cac anh huong dan co the dat trong TikTok LIVE Studio.
 
@@ -18,6 +18,13 @@ Chay nhanh tren Windows:
 3. Cai Node.js 20 tro len, sau do nhan dup run.bat.
 4. Neu cong 3000 dang bi chiem, dong dung chuong trinh duoc bao roi chay lai.
    Launcher khong tu tat chuong trinh khac de tranh mat du lieu.
+
+Phat nhac tren TikTok LIVE Studio:
+1. Tha MP3/WAV/OGG/M4A vao DJ_MUSIC.
+2. Trong Control Panel mo tab DJ Music, bam Quet thu vien va copy Music Source URL.
+3. Trong TikTok LIVE Studio chon Add source > Link, dan URL vua copy.
+4. Bam Phat nhac trong Control Panel. Neu Link Source yeu cau, bam Bat am thanh LIVE mot lan ngay trong nguon Link.
+5. Chon bai, chuyen bai va chinh am luong trong Control Panel. Unity Game khong phat nhac nua.
 
 Dau hieu thanh cong:
 - Cua so TikTok Bridge hien http://127.0.0.1:3000.
