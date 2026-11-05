@@ -45,7 +45,8 @@ DJ MUSIC PLAYER
 3. Copy Music Source URL, trong TikTok LIVE Studio chon Add source > Link va dan URL.
 4. Bam Phat nhac trong Control Panel. Neu trang Link hien nut Bat am thanh LIVE, bam nut do mot lan ngay trong nguon Link.
 5. Sau do co the chon bai, tam dung, chuyen bai, bat ngau nhien/lap va chinh am luong tu Control Panel.
-Nhac phat trong nguon Link cua LIVE Studio; Unity Game khong con tu phat nhac.
+Nhac phat trong nguon Link cua LIVE Studio; Unity Game khong con tu phat nhac sau khi build lai EXE tu source.
+Neu van dung EXE cu, mo Windows Settings > System > Sound > Volume mixer va dat am luong rieng cua OngChuMMO_Live.exe ve 0. Khong tat tieng Link Source trong LIVE Studio.
 
 VIDEO DJ
 
