@@ -4,15 +4,47 @@
    Zalo: 0977.896.644 | Website: https://ongchummo.com
 ───────────────────────────────────────────────────────── */
 
-/* ═══ TAB NAVIGATION ════════════════════════════════════ */
-document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById('tab-' + btn.dataset.tab)?.classList.add('active');
+/* ═══ SINGLE-PAGE SIDEBAR NAVIGATION ═════════════════════ */
+const sidebarLinks = [...document.querySelectorAll('.gh-nav-link')];
+const sidebar = document.getElementById('gh-sidebar');
+const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+
+function setActiveSection(sectionId) {
+    sidebarLinks.forEach(link => {
+        const active = link.getAttribute('href') === '#' + sectionId;
+        link.classList.toggle('active', active);
+        if (active) link.setAttribute('aria-current', 'page');
+        else link.removeAttribute('aria-current');
+    });
+}
+
+sidebarLinks.forEach(link => {
+    link.addEventListener('click', () => {
+        const sectionId = link.getAttribute('href')?.slice(1);
+        if (sectionId) setActiveSection(sectionId);
+        sidebar?.classList.remove('open');
+        mobileMenuToggle?.setAttribute('aria-expanded', 'false');
     });
 });
+
+mobileMenuToggle?.addEventListener('click', () => {
+    const isOpen = sidebar?.classList.toggle('open') === true;
+    mobileMenuToggle.setAttribute('aria-expanded', String(isOpen));
+});
+
+if ('IntersectionObserver' in window) {
+    const sectionObserver = new IntersectionObserver(entries => {
+        const visible = entries
+            .filter(entry => entry.isIntersecting)
+            .sort((left, right) => right.intersectionRatio - left.intersectionRatio)[0];
+        if (visible) setActiveSection(visible.target.id);
+    }, {
+        rootMargin: '-18% 0px -68% 0px',
+        threshold: [0, 0.1, 0.25, 0.5, 0.75]
+    });
+
+    document.querySelectorAll('.page-section').forEach(section => sectionObserver.observe(section));
+}
 
 /* ═══ UI ELEMENT REFS ════════════════════════════════════ */
 const ui = {
