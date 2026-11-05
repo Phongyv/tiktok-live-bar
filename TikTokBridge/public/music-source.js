@@ -101,7 +101,6 @@ function applyState(nextState) {
     } else {
         pendingPlay = false;
         audio.pause();
-        reportPlayback(false);
     }
 }
 
