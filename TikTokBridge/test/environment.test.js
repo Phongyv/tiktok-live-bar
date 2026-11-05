@@ -17,12 +17,12 @@ test('parses comments, quotes, and values containing equals signs', () => {
         '# comment',
         'PORT=3100',
         'HOST="127.0.0.1"',
-        "LIVE_PROVIDER='tikfinity'",
+        "APP_MODE='production'",
         'TOKEN=value=with=equals'
     ].join('\n')), {
         PORT: '3100',
         HOST: '127.0.0.1',
-        LIVE_PROVIDER: 'tikfinity',
+        APP_MODE: 'production',
         TOKEN: 'value=with=equals'
     });
 });

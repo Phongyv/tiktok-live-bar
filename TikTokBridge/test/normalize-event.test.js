@@ -6,7 +6,6 @@ const {
     normalizeGift,
     isPendingGiftStreak
 } = require('../src/tiktok/normalize-event');
-const { normalizeTikFinityMessage } = require('../src/tiktok/normalize-tikfinity-event');
 
 test('normalizes v2 nested chat user data', () => {
     const event = normalizeChat({
@@ -64,61 +63,4 @@ test('normalizes gift value and detects unfinished streaks', () => {
 
     const finished = { ...pending, repeatEnd: true };
     assert.equal(isPendingGiftStreak(finished), false);
-});
-
-test('normalizes TikFinity chat and gift envelopes', () => {
-    const [chat] = normalizeTikFinityMessage(JSON.stringify({
-        event: 'chat',
-        data: {
-            msgId: 'tf-chat-1',
-            user: { userId: '21', uniqueId: 'viewer21', nickname: 'Viewer 21' },
-            comment: 'hey'
-        }
-    }));
-    const [gift] = normalizeTikFinityMessage({
-        event: 'gift',
-        data: {
-            eventId: 'tf-gift-1',
-            userId: '21',
-            uniqueId: 'viewer21',
-            nickname: 'Viewer 21',
-            gift: {
-                id: 5655,
-                name: 'Rose',
-                diamondCount: 1,
-                giftImage: { url: ['https://example.com/rose.png'] }
-            },
-            repeatCount: 3
-        }
-    });
-
-    assert.equal(chat.type, 'chat');
-    assert.equal(chat.comment, 'hey');
-    assert.equal(gift.type, 'gift');
-    assert.equal(gift.giftName, 'Rose');
-    assert.equal(gift.diamondCount, 3);
-    assert.equal(gift.unitDiamondCount, 1);
-    assert.equal(gift.giftPictureUrl, 'https://example.com/rose.png');
-    assert.equal(gift.repeatEnd, true);
-});
-
-test('prefers TikFinity JPEG avatar variant that Unity can decode', () => {
-    const [chat] = normalizeTikFinityMessage({
-        event: 'chat',
-        data: {
-            userId: '22',
-            uniqueId: 'viewer22',
-            nickname: 'Viewer 22',
-            profilePictureUrl: 'https://example.com/avatar.webp?token=1',
-            userDetails: {
-                profilePictureUrls: [
-                    'https://example.com/avatar.webp?token=2',
-                    'https://example.com/avatar.jpeg?token=3'
-                ]
-            },
-            comment: 'hey'
-        }
-    });
-
-    assert.equal(chat.avatar, 'https://example.com/avatar.jpeg?token=3');
 });

@@ -14,7 +14,6 @@ const { getServerSettings, loadEnvironmentFile } = require('./src/config/environ
 
 loadEnvironmentFile();
 
-const { normalizeTikFinityMessage } = require('./src/tiktok/normalize-tikfinity-event');
 const {
     normalizeChat,
     normalizeMember,
@@ -52,8 +51,6 @@ const assetsDir = path.join(__dirname, 'assets');
 const gifsDir = path.join(assetsDir, 'gifs');
 const masterConfigPath = path.join(__dirname, 'config', 'master.json');
 const observedGiftsPath = path.join(__dirname, 'config', 'observed-gifts.json');
-const LIVE_PROVIDER = String(process.env.LIVE_PROVIDER || gameConfig.liveProvider || 'tikfinity').toLowerCase();
-const TIKFINITY_WS_URL = String(process.env.TIKFINITY_WS_URL || gameConfig.tikfinityWsUrl || 'ws://127.0.0.1:21213/');
 
 let liveConnection = null;
 let connectionAttempt = 0;
@@ -571,67 +568,14 @@ function scheduleReconnect(username) {
     setStatus(
         'reconnecting',
         username,
-        LIVE_PROVIDER === 'tikfinity'
-            ? `Chưa thấy TikFinity Desktop. Tự thử lại sau ${Math.ceil(delayMs / 1000)} giây...`
-            : `Mất kết nối TikTok. Tự kết nối lại sau ${Math.ceil(delayMs / 1000)} giây...`
+        `Mất kết nối TikTok. Tự kết nối lại sau ${Math.ceil(delayMs / 1000)} giây...`
     );
     reconnectTimer = setTimeout(() => {
         reconnectTimer = null;
         if (desiredUsername === username) {
-            void connectToLiveProvider(username, { resetSession: false, isReconnect: true });
+            void connectToTikTok(username, { resetSession: false, isReconnect: true });
         }
     }, delayMs);
-}
-
-async function connectToTikFinity(username, options = {}) {
-    const resetSession = options.resetSession !== false;
-    const isReconnect = options.isReconnect === true;
-    stopDemo();
-    cancelReconnect();
-    desiredUsername = username;
-    const attempt = ++connectionAttempt;
-    await disconnectCurrentConnection();
-
-    if (resetSession) {
-        resetSessionState('tiktok');
-        broadcast({ type: 'reset' });
-        broadcastMetrics();
-    }
-    setStatus(
-        isReconnect ? 'reconnecting' : 'connecting',
-        username,
-        isReconnect ? 'Đang kết nối lại TikFinity Desktop...' : 'Đang kết nối TikFinity Desktop...'
-    );
-
-    const connection = new WebSocket(TIKFINITY_WS_URL);
-    liveConnection = connection;
-    const active = () => attempt === connectionAttempt && liveConnection === connection;
-
-    connection.on('open', () => {
-        if (!active()) return;
-        reconnectFailures = 0;
-        setStatus('connected', username, `Đã kết nối TikFinity cho @${username}`);
-        broadcastMetrics();
-        console.log(`Đã kết nối TikFinity tại ${TIKFINITY_WS_URL}`);
-    });
-    connection.on('message', payload => {
-        if (!active()) return;
-        for (const event of normalizeTikFinityMessage(payload)) processGameEvent(event);
-    });
-    connection.on('error', error => {
-        console.warn(`TikFinity WebSocket: ${error.message}`);
-    });
-    connection.on('close', () => {
-        if (!active()) return;
-        liveConnection = null;
-        scheduleReconnect(username);
-    });
-}
-
-function connectToLiveProvider(username, options = {}) {
-    return LIVE_PROVIDER === 'tikfinity'
-        ? connectToTikFinity(username, options)
-        : connectToTikTok(username, options);
 }
 
 function attachTikTokEvents(connection) {
@@ -795,7 +739,7 @@ async function handleClientMessage(ws, message) {
                 message: 'Username chỉ được gồm chữ, số, dấu chấm hoặc gạch dưới.'
             });
         }
-        return connectToLiveProvider(username);
+        return connectToTikTok(username);
     }
 
     if (message.type === 'disconnect_tiktok') {
