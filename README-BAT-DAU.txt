@@ -24,7 +24,8 @@ Phat nhac tren TikTok LIVE Studio:
 2. Trong Control Panel mo tab DJ Music, bam Quet thu vien va copy Music Source URL.
 3. Trong TikTok LIVE Studio chon Add source > Link, dan URL vua copy.
 4. Bam Phat nhac trong Control Panel. Neu Link Source yeu cau, bam Bat am thanh LIVE mot lan ngay trong nguon Link.
-5. Chon bai, chuyen bai va chinh am luong trong Control Panel. Unity Game khong phat nhac nua.
+5. Chon bai, chuyen bai va chinh am luong trong Control Panel. EXE Unity moi build tu source se khong phat nhac nua.
+6. Neu dang dung EXE cu, mo Windows Settings > System > Sound > Volume mixer va dat am luong OngChuMMO_Live.exe ve 0.
 
 Dau hieu thanh cong:
 - Cua so TikTok Bridge hien http://127.0.0.1:3000.
