@@ -3,42 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ÔNG CHÚ MMO — TikTok Live</title>
+    <title>ÔNG CHÚ MMO — Control Center</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="apple-touch-icon" href="/favicon.svg">
     <link rel="stylesheet" href="control.css">
 </head>
 <body>
 
-<!-- ═══════════ NAVBAR ═══════════ -->
-<nav class="navbar">
-    <div class="navbar-brand">
-        <img src="/favicon.svg" alt="ÔNG CHÚ MMO">
-        <span class="navbar-brand-text">ÔNG CHÚ MMO <span>Live</span></span>
+<!-- ═══════════ GITHUB-STYLE HEADER ═══════════ -->
+<header class="gh-header">
+    <div class="gh-header-left">
+        <button class="gh-mobile-menu" id="mobile-menu-toggle" type="button" aria-label="Mở điều hướng">☰</button>
+        <a class="gh-mark" href="#tab-live" aria-label="ÔNG CHÚ MMO Control Center">
+            <img src="/favicon.svg" alt="">
+        </a>
+        <div class="gh-breadcrumb">
+            <span class="gh-breadcrumb-owner">ÔNG CHÚ MMO</span>
+            <span class="gh-breadcrumb-slash">/</span>
+            <strong>Control Center</strong>
+            <span class="gh-repo-badge">Public</span>
+        </div>
     </div>
-    <div class="tab-nav">
-        <button class="tab-btn active" data-tab="live">🔴 Live</button>
-        <button class="tab-btn" data-tab="music">🎵 DJ Music</button>
-        <button class="tab-btn" data-tab="rules">⚙️ Master Rules</button>
-        <button class="tab-btn" data-tab="testlab">🧪 Test Lab</button>
-        <button class="tab-btn" data-tab="events">🎯 Events</button>
-        <button class="tab-btn" data-tab="session">📊 Session</button>
-        <button class="tab-btn" data-tab="guide">📖 Hướng Dẫn</button>
-    </div>
-    <div class="navbar-right">
+    <div class="gh-header-right">
+        <span class="gh-header-caption">TikTok LIVE workspace</span>
         <div class="status-pill" id="live-badge">
             <span class="status-dot" id="status-dot"></span>
             <span id="status-title">Đang kết nối</span>
         </div>
-        <span class="navbar-copy">© 2025 ÔNG CHÚ MMO</span>
     </div>
-</nav>
+</header>
 
-<!-- ═══════════ APP ═══════════ -->
-<div class="app-shell">
+<!-- ═══════════ SINGLE-PAGE WORKSPACE ═══════════ -->
+<div class="control-layout">
+    <aside class="gh-sidebar" id="gh-sidebar">
+        <div class="gh-sidebar-title">WORKSPACE</div>
+        <nav class="gh-sidebar-nav" aria-label="Điều hướng Control Center">
+            <a class="gh-nav-link active" href="#tab-live" aria-current="page">
+                <span class="gh-nav-icon">◉</span><span>Live connection</span>
+            </a>
+            <a class="gh-nav-link" href="#tab-music">
+                <span class="gh-nav-icon">♫</span><span>DJ Music</span>
+            </a>
+            <a class="gh-nav-link" href="#tab-rules">
+                <span class="gh-nav-icon">⚙</span><span>Master Rules</span>
+            </a>
+            <a class="gh-nav-link" href="#tab-testlab">
+                <span class="gh-nav-icon">⌁</span><span>Test Lab</span>
+            </a>
+            <a class="gh-nav-link" href="#tab-events">
+                <span class="gh-nav-icon">◇</span><span>Event Triggers</span>
+            </a>
+            <a class="gh-nav-link" href="#tab-session">
+                <span class="gh-nav-icon">▥</span><span>Session analytics</span>
+            </a>
+            <a class="gh-nav-link" href="#tab-guide">
+                <span class="gh-nav-icon">ⓘ</span><span>Documentation</span>
+            </a>
+        </nav>
+        <div class="gh-sidebar-divider"></div>
+        <div class="gh-sidebar-note">
+            <span class="gh-sidebar-note-dot"></span>
+            <span>Local workspace</span>
+        </div>
+    </aside>
+    <main class="page-content" id="page-content">
 
 <!-- ── LIVE ── -->
-<section class="tab-panel active" id="tab-live">
+<section class="page-section" id="tab-live">
     <div class="page-header">
         <p class="page-eyebrow">Kết nối</p>
         <h1 class="page-title">TikTok Live</h1>
@@ -97,7 +128,7 @@
 </section>
 
 <!-- ── DJ MUSIC ── -->
-<section class="tab-panel" id="tab-music">
+<section class="page-section" id="tab-music">
     <div class="page-header">
         <p class="page-eyebrow">Âm thanh livestream</p>
         <h1 class="page-title">🎵 DJ Music Player</h1>
@@ -169,7 +200,7 @@
 </section>
 
 <!-- ── MASTER RULES ── -->
-<section class="tab-panel" id="tab-rules">
+<section class="page-section" id="tab-rules">
     <div class="page-header">
         <p class="page-eyebrow">Cấu hình</p>
         <h1 class="page-title">Master Rules</h1>
@@ -219,7 +250,7 @@
 </section>
 
 <!-- ── TEST LAB ── -->
-<section class="tab-panel" id="tab-testlab">
+<section class="page-section" id="tab-testlab">
     <div class="page-header">
         <p class="page-eyebrow">Thử nghiệm</p>
         <h1 class="page-title">Test Lab</h1>
@@ -262,7 +293,7 @@
 </section>
 
 <!-- ── EVENTS ── -->
-<section class="tab-panel" id="tab-events">
+<section class="page-section" id="tab-events">
     <div class="page-header">
         <p class="page-eyebrow">Giả lập</p>
         <h1 class="page-title">Event Triggers</h1>
@@ -321,7 +352,7 @@
 </section>
 
 <!-- ── SESSION ── -->
-<section class="tab-panel" id="tab-session">
+<section class="page-section" id="tab-session">
     <div class="page-header">
         <p class="page-eyebrow">Thống kê</p>
         <h1 class="page-title">Session</h1>
@@ -348,7 +379,7 @@
 </section>
 
 <!-- ── HƯỚNG DẪN ── -->
-<section class="tab-panel" id="tab-guide">
+<section class="page-section" id="tab-guide">
     <div class="page-header">
         <p class="page-eyebrow">Bắt đầu nhanh</p>
         <h1 class="page-title">📖 Hướng Dẫn Sử Dụng</h1>
@@ -368,8 +399,8 @@
         </div>
         <div class="card">
             <p class="card-label">Bước 3</p>
-            <h2 class="card-title" style="margin-bottom:8px;">📺 Thêm vào OBS</h2>
-            <p class="help">Thêm source <strong>Game Capture</strong> → chọn cửa sổ ÔNG CHÚ MMO Live. Bấm <strong>F2</strong> trong game để bật Chroma Key.</p>
+            <h2 class="card-title" style="margin-bottom:8px;">📺 Thêm vào TikTok LIVE Studio</h2>
+            <p class="help">Thêm nguồn <strong>Game Capture</strong> hoặc <strong>Window Capture</strong> để lấy cửa sổ game. Dùng <strong>F2</strong> để bật nền Chroma khi cần.</p>
         </div>
         <div class="card">
             <p class="card-label">Bước 4</p>
@@ -400,13 +431,14 @@
 </section>
 
 <!-- ── FOOTER ── -->
-<footer class="page-footer" style="max-width:1100px;margin:0 auto;padding-left:24px;padding-right:24px;">
+<footer class="page-footer">
     © 2025 <strong>ÔNG CHÚ MMO</strong> &nbsp;|&nbsp; <a href="https://ongchummo.com" target="_blank">ongchummo.com</a>
     &nbsp;&bull;&nbsp; Zalo: <a href="https://zalo.me/0977896644" target="_blank">0977.896.644</a>
     &nbsp;&bull;&nbsp; Email: <a href="mailto:toanhvan90@gmail.com">toanhvan90@gmail.com</a>
 </footer>
+</main>
 
-</div><!-- end app-shell -->
+</div><!-- end control-layout -->
 
 <!-- ── Rule Template ── -->
 <template id="master-rule-template">
