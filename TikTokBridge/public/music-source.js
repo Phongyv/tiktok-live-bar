@@ -194,11 +194,4 @@ audio.addEventListener('play', () => {
     hidePanel();
     reportPlayback(true);
 });
-audio.addEventListener('pause', () => {
-    if (!pendingPlay && !audio.ended) {
-        state.playing = false;
-        reportPlayback(false);
-    }
-});
-
 connect();
