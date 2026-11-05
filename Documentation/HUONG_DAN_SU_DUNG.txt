@@ -15,7 +15,7 @@ Khong can dong game khi bi rot mang ngan han.
 PHIM TAT
 
 F1  An/hien bang dieu khien.
-F2  Bat/tat nen xanh chroma de ghep OBS.
+F2  Bat/tat nen xanh chroma de ghep TikTok LIVE Studio.
 F11 Bat/tat toan man hinh.
 
 LENH CHAT
@@ -33,11 +33,19 @@ Khi mot nguoi tang qua, nguoi do se sang ro va camera zoom lai.
 Nguoi tang hien ten, avatar, banner, canh va hieu ung theo gia tri gift.
 Sau khi hieu ung ket thuc, nguoi khong thuoc Top 3 se tro lai trang thai mo.
 
-OBS
+TIKTOK LIVE STUDIO
 
-Capture cua so OngChuMMO_Live.exe bang Game Capture.
-Neu muon ghep len video, bam F2 va dung Chroma Key mau xanh trong OBS.
-Nhac duoc mo rieng trong OBS hoac TikTok Live Studio.
+Capture cua so OngChuMMO_Live.exe bang Game Capture hoac Window Capture.
+Neu muon ghep len video, bam F2 va dung Chroma Key mau xanh trong TikTok LIVE Studio.
+
+DJ MUSIC PLAYER
+
+1. Tha file MP3, WAV, OGG hoac M4A vao thu muc DJ_MUSIC.
+2. Mo Control Panel, chon tab DJ Music va bam Quet thu vien.
+3. Copy Music Source URL, trong TikTok LIVE Studio chon Add source > Link va dan URL.
+4. Bam Phat nhac trong Control Panel. Neu trang Link hien nut Bat am thanh LIVE, bam nut do mot lan ngay trong nguon Link.
+5. Sau do co the chon bai, tam dung, chuyen bai, bat ngau nhien/lap va chinh am luong tu Control Panel.
+Nhac phat trong nguon Link cua LIVE Studio; Unity Game khong con tu phat nhac.
 
 VIDEO DJ
 
