@@ -2,14 +2,14 @@ ONG CHU MMO LIVE - FULL SOURCE, GIAY PHEP MIT
 
 Noi dung goi:
 - UnityProject: toan bo source Unity, scene, script va asset cua game.
-- TikTokBridge: Node.js bridge, TikTok/TikFinity, Control va Master Rules.
+- TikTokBridge: Node.js bridge ket noi truc tiep TikTok LIVE, Control va Master Rules.
 - DJ_MUSIC: tha file MP3, WAV hoac OGG cua ban vao day.
 - DJ_VIDEO: tha video MP4 hoac anh PNG/JPG cua ban vao day.
 - LiveAssets: cac anh huong dan co the dat trong TikTok LIVE Studio.
 
 Yeu cau:
 - Node.js 20 tro len.
-- TikFinity neu su dung LIVE_PROVIDER=tikfinity.
+- Khong can TikFinity Desktop hoac phan mem trung gian de nhan su kien LIVE.
 - Unity 6000.2.10f1 chi can khi tu build source.
 
 Chay nhanh tren Windows:
