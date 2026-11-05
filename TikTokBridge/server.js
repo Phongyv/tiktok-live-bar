@@ -109,7 +109,8 @@ app.use((req, res, next) => {
         return res.status(403).type('text/plain').send('Forbidden');
     }
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'DENY');
+    const isMusicSourceDocument = req.path === '/music-source.html';
+    if (!isMusicSourceDocument) res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('Referrer-Policy', 'no-referrer');
     res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
     res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
@@ -117,7 +118,7 @@ app.use((req, res, next) => {
         "default-src 'self'",
         "base-uri 'none'",
         "object-src 'none'",
-        "frame-ancestors 'none'",
+        ...(isMusicSourceDocument ? [] : ["frame-ancestors 'none'"]),
         "form-action 'self'",
         "script-src 'self' 'unsafe-inline'",
         "style-src 'self' 'unsafe-inline'",
