@@ -9,7 +9,7 @@ Noi dung goi:
 
 Yeu cau:
 - Node.js 20 tro len.
-- Khong can TikFinity Desktop hoac phan mem trung gian de nhan su kien LIVE.
+- Bridge tu ket noi TikTok LIVE va nhan su kien truc tiep.
 - Unity 6000.2.10f1 chi can khi tu build source.
 
 Chay nhanh tren Windows:
