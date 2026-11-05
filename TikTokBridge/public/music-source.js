@@ -110,14 +110,14 @@ function handleLibrary(data) {
     send({ type: 'music_source_ready' });
 
     if (!tracks.length) {
-        showPanel('Chưa có file nhạc', 'Thêm MP3, WAV, OGG hoặc M4A vào DJ_MUSIC rồi bấm Quét thư viện trong Control Panel.');
+        hidePanel();
         return;
     }
 
     if (state.playing) {
         void startPlayback(false);
     } else {
-        showPanel('Music Source đã kết nối', 'Đang chờ lệnh phát nhạc từ Control Panel.');
+        hidePanel();
     }
 }
 
@@ -171,7 +171,7 @@ function connect() {
     });
 
     socket.addEventListener('close', () => {
-        showPanel('Mất kết nối Music Server', 'Đang tự kết nối lại…');
+        hidePanel();
         reconnectTimer = setTimeout(connect, 2000);
     });
 
