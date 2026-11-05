@@ -972,6 +972,7 @@ wss.on('connection', (ws, request) => {
     ws.on('close', () => {
         if (ws.role === 'music') {
             musicState.sourceReady = false;
+            musicState.playing = false;
             broadcastMusicState();
         }
     });
